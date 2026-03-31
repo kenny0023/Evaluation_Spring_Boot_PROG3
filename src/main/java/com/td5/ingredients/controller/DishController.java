@@ -1,10 +1,11 @@
 package com.td5.ingredients.controller;
 
-import com.td5.ingredients.entity.Dish;
+import com.td5.ingredients.entity.Ingredient;
+import com.td5.ingredients.repository.DishRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.td5.ingredients.repository.DishRepository;
 
 import java.util.List;
 
@@ -19,8 +20,8 @@ public class DishController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Dish>> getAllDishes() {
-        List<Dish> dishes = dishRepository.findAll();
+    public ResponseEntity<List<com.td5.ingredients.entity.Dish>> getAllDishes() {
+        List<com.td5.ingredients.entity.Dish> dishes = dishRepository.findAll();
         return ResponseEntity.ok(dishes);
     }
 
@@ -43,19 +44,20 @@ public class DishController {
         }
     }
 
-    @GetMapping("/{id}/ingredients")
+    @GetMapping(value = "/{id}/ingredients", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getDishIngredientsWithFilters(
             @PathVariable Integer id,
-            @RequestParam(required = false) String ingredientName,
-            @RequestParam(required = false) Double ingredientPriceAround) {
+            @RequestParam(value = "ingredientName", required = false) String ingredientName,
+            @RequestParam(value = "ingredientPriceAround", required = false) Double ingredientPriceAround) {
 
-        try {
-            List<com.td5.ingredients.entity.Ingredient> ingredients =
-                    dishRepository.findIngredientsByDishIdWithFilters(id, ingredientName, ingredientPriceAround);
-            return ResponseEntity.ok(ingredients);
-        } catch (Exception e) {
+        if (!dishRepository.existsById(id)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Dish.id=" + id + " is not found");
         }
+
+        List<Ingredient> ingredients = dishRepository.findIngredientsByDishIdWithFilters(
+                id, ingredientName, ingredientPriceAround);
+
+        return ResponseEntity.ok(ingredients);
     }
 }
