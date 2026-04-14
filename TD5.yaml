@@ -1,0 +1,187 @@
+openapi: 3.0.3
+info:
+  title: TD5 - Gestion des Ingrédients et Plats API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+
+paths:
+
+  /ingredients:
+    get:
+      summary: Récupérer la liste de tous les ingrédients
+      description: Retourne tous les ingrédients enregistrés en base de données.
+      responses:
+        '200':
+          description: Liste des ingrédients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ingredient'
+
+  /ingredients/{id}:
+    get:
+      summary: Récupérer un ingrédient par son identifiant
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Identifiant de l'ingrédient
+      responses:
+        '200':
+          description: Ingrédient trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ingredient'
+        '404':
+          description: Ingrédient non trouvé
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "Ingredient.id=42 is not found"
+
+  /ingredients/{id}/stock:
+    get:
+      summary: Récupérer le stock d'un ingrédient à une date donnée
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: at
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          example: "2025-04-14 10:30:00"
+          description: Date et heure au format timestamp
+        - name: unit
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [PCS, KG, L]
+      responses:
+        '200':
+          description: Valeur du stock
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stock'
+        '400':
+          description: Paramètres obligatoires manquants
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "Either mandatory query parameter `at` or `unit` is not provided."
+        '404':
+          description: Ingrédient non trouvé
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "Ingredient.id=42 is not found"
+
+  /dishes:
+    get:
+      summary: Récupérer la liste de tous les plats
+      responses:
+        '200':
+          description: Liste des plats avec leurs ingrédients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Dish'
+
+  /dishes/{id}/ingredients:
+    put:
+      summary: Associer ou dissocier des ingrédients à un plat
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Ingredient'
+      responses:
+        '200':
+          description: Association mise à jour avec succès
+        '400':
+          description: Corps de requête manquant
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "Le corps de la requête est obligatoire"
+        '404':
+          description: Plat non trouvé
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "Dish.id=5 is not found"
+
+components:
+  schemas:
+
+    Ingredient:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nom:
+          type: string
+        categorie:
+          type: string
+        prix:
+          type: number
+          format: decimal
+
+    Stock:
+      type: object
+      properties:
+        unite:
+          type: string
+          enum: [PCS, KG, L]
+        valeur:
+          type: number
+          format: decimal
+
+    Dish:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        nom:
+          type: string
+        prixVente:
+          type: number
+          format: decimal
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ingredient'
